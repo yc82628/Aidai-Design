@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Animator Name — 3D Animation</title>
+  <meta name="description" content="Showreel and portfolio of Animator Name, 3D animator.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Corner marks: no nav bar. Navigation lives in the timeline at the bottom. -->
+  <a href="#reel" class="mark">Animator&nbsp;Name</a>
+  <p class="status"><span class="status__dot" aria-hidden="true"></span>Available for work</p>
+
+  <main>
+
+    <!-- Reel: until the showreel video exists, a live 3D wireframe stands in for it.
+         Set REEL in script.js to a video file and it replaces the wireframe. -->
+    <section class="hero" id="reel" data-label="Reel">
+      <canvas class="hero__viewport" id="viewport" aria-hidden="true"></canvas>
+      <video class="hero__video" id="hero-video" muted loop playsinline hidden></video>
+      <div class="hero__hud" aria-hidden="true">
+        <span>User Perspective</span>
+        <span>(1) Showreel</span>
+        <span id="hud-frame">Frame 1001</span>
+      </div>
+      <div class="hero__text">
+        <p class="eyebrow">3D Animator · Character &amp; Creature</p>
+        <h1>Animator Name</h1>
+        <button class="play" id="play-reel"><span class="play__icon" aria-hidden="true"></span>Play showreel</button>
+      </div>
+    </section>
+
+    <!-- Work: cards are built from the PROJECTS list in script.js -->
+    <section class="section" id="work" data-label="Work">
+      <header class="section__head">
+        <h2>Selected shots</h2>
+        <p class="section__note" id="work-count"></p>
+      </header>
+      <div class="work" id="work-grid"></div>
+    </section>
+
+    <!-- Breakdown: drag to compare the clay pass with the final render -->
+    <section class="section" id="breakdown" data-label="Breakdown">
+      <header class="section__head">
+        <h2>Shot breakdown</h2>
+        <p class="section__note">Drag to compare</p>
+      </header>
+      <div class="compare" id="compare">
+        <img class="compare__img" id="compare-after" alt="Final render (placeholder)">
+        <img class="compare__img compare__img--before" id="compare-before" alt="Clay render (placeholder)">
+        <span class="compare__tag compare__tag--before">Clay</span>
+        <span class="compare__tag compare__tag--after">Final</span>
+        <span class="compare__handle" aria-hidden="true"></span>
+        <input class="compare__range" id="compare-range" type="range" min="0" max="100" value="50" aria-label="Compare clay pass and final render">
+      </div>
+      <ol class="pipeline">
+        <li><strong>Blocking</strong>Key poses and timing, stepped.</li>
+        <li><strong>Spline</strong>Breakdowns and arcs, first pass of motion.</li>
+        <li><strong>Polish</strong>Overlap, weight and contact detail.</li>
+        <li><strong>Lighting</strong>Key, fill and rim to sell the form.</li>
+        <li><strong>Comp</strong>Passes combined into the final frame.</li>
+      </ol>
+    </section>
+
+    <section class="section about" id="about" data-label="About">
+      <figure class="about__portrait">
+        <img id="portrait" alt="Portrait of the animator (placeholder)">
+      </figure>
+      <div class="about__text">
+        <p class="eyebrow">About</p>
+        <h2>A short line about how they move things.</h2>
+        <p>Placeholder bio. Where they're based, the kind of animation they love (character, creature, mocap clean-up, stylised), and the studios or productions they've worked on.</p>
+        <p>Second paragraph: what they're looking for next, and how they like to work with a team.</p>
+        <div class="about__lists">
+          <div>
+            <h3>Toolkit</h3>
+            <ul class="chips">
+              <li>Maya</li><li>Blender</li><li>Houdini</li><li>Unreal Engine</li><li>Nuke</li><li>Substance</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Worked with</h3>
+            <ul class="credits">
+              <li>Studio One</li><li>Studio Two</li><li>Game Studio Three</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section contact" id="contact" data-label="Contact">
+      <p class="eyebrow">Contact</p>
+      <h2>Got a shot that needs to move?</h2>
+      <a class="contact__email" href="mailto:hello@example.com">hello@example.com</a>
+      <ul class="contact__social">
+        <li><a href="#">Vimeo</a></li>
+        <li><a href="#">ArtStation</a></li>
+        <li><a href="#">LinkedIn</a></li>
+        <li><a href="#">Instagram</a></li>
+      </ul>
+    </section>
+
+    <footer class="footer">
+      <p>© <span id="year"></span> Animator Name. All work © the artist and respective studios.</p>
+    </footer>
+
+  </main>
+
+  <!-- Timeline: scroll position as a playhead; each section is a keyframe you can jump to.
+       Keyframes are built from every element with data-label. -->
+  <nav class="timeline" aria-label="Sections">
+    <span class="timeline__tc" id="timecode">00:00:00:00</span>
+    <div class="timeline__track" id="track">
+      <span class="timeline__playhead" id="playhead" aria-hidden="true"></span>
+    </div>
+    <span class="timeline__label" id="timeline-label">Reel</span>
+  </nav>
+
+  <!-- Player for the showreel and individual shots -->
+  <div class="player" id="player" role="dialog" aria-modal="true" aria-label="Video player" hidden>
+    <button class="player__close" aria-label="Close">×</button>
+    <figure>
+      <div class="player__screen">
+        <video id="player-video" controls playsinline></video>
+        <p class="player__empty" id="player-empty" hidden><span>No video added yet. Set this shot's <code>video</code> in script.js.</span></p>
+      </div>
+      <figcaption><strong id="player-title"></strong><span id="player-meta"></span></figcaption>
+    </figure>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
