@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Work — Aidai</title>
+  <meta name="description" content="Projects and gallery from Aidai, 3D animator.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="work">
+
+  <!-- Corner marks and backdrop menu: the same on every page -->
+  <a href="index.html" class="mark" aria-label="Aidai, home">Aidai</a>
+  <button class="menu-toggle" aria-expanded="false" aria-controls="backdrop">
+    <span class="menu-toggle__label">Menu</span>
+    <span class="menu-toggle__dot" aria-hidden="true"></span>
+  </button>
+  <div class="backdrop" id="backdrop" aria-hidden="true">
+    <div class="backdrop__art" aria-hidden="true"></div>
+    <nav class="backdrop__nav" aria-label="Site">
+      <ol>
+        <li><a href="index.html" data-page="home"><span>01</span>Home</a></li>
+        <li><a href="work.html" data-page="work"><span>02</span>Work</a></li>
+        <li><a href="about.html" data-page="about"><span>03</span>About</a></li>
+        <li><a href="about.html#contact" data-page="contact"><span>04</span>Contact</a></li>
+      </ol>
+    </nav>
+    <p class="backdrop__foot">3D animation · Character · Creature</p>
+  </div>
+
+  <main id="top">
+
+    <!-- Divider page with the project index; projects below are built from PROJECTS in script.js -->
+    <section class="panel index">
+      <div class="labels">
+        <span>( Projects / Gallery )</span>
+        <span id="work-count"></span>
+      </div>
+      <h1 class="giant giant--two">Selected<br>Work</h1>
+      <ol class="index__list" id="index-list"></ol>
+    </section>
+
+    <div id="projects"></div>
+
+    <!-- Next page, so the visit never dead-ends -->
+    <a class="panel next" href="about.html">
+      <span class="labels"><span>( Next )</span><span>Who made all this</span></span>
+      <span class="next__title">About <span aria-hidden="true">→</span></span>
+    </a>
+
+    <footer class="panel footer-panel">
+      <div class="footer">
+        <span>© <span class="js-year"></span> Aidai</span>
+        <span>All work © the artist and respective studios</span>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- Viewer for videos and stills -->
+  <div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-label="Viewer" hidden>
+    <button class="viewer__close" aria-label="Close">×</button>
+    <button class="viewer__nav viewer__nav--prev" aria-label="Previous">‹</button>
+    <figure>
+      <div class="viewer__frame">
+        <img id="viewer-img" alt="">
+        <video id="viewer-video" controls playsinline></video>
+        <p class="viewer__empty" id="viewer-empty"><span>No video added yet. Set this project's <code>video</code> in script.js.</span></p>
+      </div>
+      <figcaption id="viewer-cap"></figcaption>
+    </figure>
+    <button class="viewer__nav viewer__nav--next" aria-label="Next">›</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

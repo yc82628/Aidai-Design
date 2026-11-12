@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>About — Aidai</title>
+  <meta name="description" content="About Aidai, 3D animator: experience, toolkit and contact.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="about">
+
+  <!-- Corner marks and backdrop menu: the same on every page -->
+  <a href="index.html" class="mark" aria-label="Aidai, home">Aidai</a>
+  <button class="menu-toggle" aria-expanded="false" aria-controls="backdrop">
+    <span class="menu-toggle__label">Menu</span>
+    <span class="menu-toggle__dot" aria-hidden="true"></span>
+  </button>
+  <div class="backdrop" id="backdrop" aria-hidden="true">
+    <div class="backdrop__art" aria-hidden="true"></div>
+    <nav class="backdrop__nav" aria-label="Site">
+      <ol>
+        <li><a href="index.html" data-page="home"><span>01</span>Home</a></li>
+        <li><a href="work.html" data-page="work"><span>02</span>Work</a></li>
+        <li><a href="about.html" data-page="about"><span>03</span>About</a></li>
+        <li><a href="about.html#contact" data-page="contact"><span>04</span>Contact</a></li>
+      </ol>
+    </nav>
+    <p class="backdrop__foot">3D animation · Character · Creature</p>
+  </div>
+
+  <main id="top">
+
+    <section class="panel panel--dark about">
+      <div class="about__head">
+        <p class="labels about__labels"><span>( About )</span></p>
+        <h1 class="big">About<br><span>Aidai</span></h1>
+        <ul class="about__contact">
+          <li>City, Country</li>
+          <li>Available for freelance</li>
+        </ul>
+      </div>
+      <figure class="about__portrait">
+        <img id="portrait" alt="Portrait of Aidai (placeholder)">
+      </figure>
+      <p class="about__bio">Placeholder bio. A few lines on what Aidai animates, the feeling they chase in a shot, and the kind of team they want to work with next.</p>
+      <div class="about__cols">
+        <div>
+          <h2>Experience</h2>
+          <ul>
+            <li><span>Studio One</span><span>Animator · 2025—</span></li>
+            <li><span>Studio Two</span><span>Junior animator · 2024</span></li>
+            <li><span>Freelance</span><span>2023—</span></li>
+          </ul>
+        </div>
+        <div>
+          <h2>Education</h2>
+          <ul>
+            <li><span>School of Animation</span><span>BA · 2023</span></li>
+          </ul>
+        </div>
+        <div>
+          <h2>Toolkit</h2>
+          <ul class="about__tools">
+            <li>Maya</li><li>Blender</li><li>Houdini</li><li>Unreal</li><li>After Effects</li><li>Nuke</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel contact" id="contact">
+      <div class="labels">
+        <span>( Contact )</span>
+        <span>Let's make something move</span>
+      </div>
+      <a class="contact__email" href="mailto:hello@example.com">hello@example.com</a>
+      <ul class="contact__social">
+        <li><a href="#">Vimeo</a></li>
+        <li><a href="#">ArtStation</a></li>
+        <li><a href="#">Instagram</a></li>
+        <li><a href="#">LinkedIn</a></li>
+      </ul>
+    </section>
+
+    <!-- Next page, so the visit never dead-ends -->
+    <a class="panel panel--dark next" href="work.html">
+      <span class="labels"><span>( Next )</span><span>Projects / Gallery</span></span>
+      <span class="next__title">See the work <span aria-hidden="true">→</span></span>
+    </a>
+
+    <footer class="panel footer-panel">
+      <div class="footer">
+        <span>© <span class="js-year"></span> Aidai</span>
+        <span>All work © the artist and respective studios</span>
+      </div>
+    </footer>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

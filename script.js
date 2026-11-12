@@ -1,246 +1,329 @@
 document.documentElement.classList.add("js");
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const canHover = window.matchMedia("(hover: hover)").matches;
+const page = document.body.dataset.page;
 
 // ---------- Placeholder art ----------
 // Generated in the browser so the base never depends on an outside image service.
-// Replace with real renders by giving each project a `thumb` file, e.g. "images/moth-thumb.jpg".
+// Replace with real files by giving each project a `poster` and `stills`, e.g. "images/moth-01.jpg".
 const svgURI = (svg) => `data:image/svg+xml,${encodeURIComponent(svg)}`;
 
-function shotArt(hue, seed, clay = false) {
-  const sky = clay ? ["#5b5e64", "#3a3c41"] : [`hsl(${hue} 45% 34%)`, `hsl(${hue + 30} 50% 12%)`];
-  const body = clay ? ["#c4c6ca", "#55585d"] : [`hsl(${hue + 180} 70% 72%)`, `hsl(${hue + 200} 55% 28%)`];
-  const floor = clay ? "#303236" : `hsl(${hue} 30% 9%)`;
+function shotArt(hue, seed) {
   const r = 150 + (seed % 2) * 50;
   const cx = 520 + (seed % 3) * 220;
-  const rim = clay ? "" : `<circle cx="${cx + 6}" cy="${620 - r - 4}" r="${r}" fill="none" stroke="hsl(${hue + 40} 90% 78%)" stroke-width="5" opacity=".45"/>`;
   return svgURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
     <defs>
-      <linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset="1" stop-color="${sky[1]}"/></linearGradient>
-      <radialGradient id="b" cx=".35" cy=".3" r=".85"><stop offset="0" stop-color="${body[0]}"/><stop offset="1" stop-color="${body[1]}"/></radialGradient>
+      <linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(${hue} 25% 22%)"/><stop offset="1" stop-color="hsl(${hue + 30} 30% 7%)"/></linearGradient>
+      <radialGradient id="b" cx=".35" cy=".3" r=".85"><stop offset="0" stop-color="hsl(${hue + 180} 55% 78%)"/><stop offset="1" stop-color="hsl(${hue + 200} 40% 22%)"/></radialGradient>
     </defs>
     <rect width="1600" height="900" fill="url(#s)"/>
-    <rect y="620" width="1600" height="280" fill="${floor}"/>
-    <ellipse cx="${cx}" cy="626" rx="${r * 1.15}" ry="${r * 0.16}" fill="rgba(0,0,0,.35)"/>
+    <rect y="620" width="1600" height="280" fill="hsl(${hue} 20% 6%)"/>
+    <ellipse cx="${cx}" cy="626" rx="${r * 1.15}" ry="${r * 0.16}" fill="rgba(0,0,0,.4)"/>
     <circle cx="${cx}" cy="${620 - r}" r="${r}" fill="url(#b)"/>
-    ${rim}
+    <circle cx="${cx + 6}" cy="${616 - r}" r="${r}" fill="none" stroke="hsl(${hue + 40} 80% 80%)" stroke-width="4" opacity=".35"/>
     <rect x="${cx + r + 110}" y="490" width="130" height="130" fill="url(#b)" transform="rotate(-8 ${cx + r + 175} 555)"/>
   </svg>`);
 }
 
 const portraitArt = svgURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000">
-  <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3d43"/><stop offset="1" stop-color="#26282c"/></linearGradient></defs>
-  <rect width="800" height="1000" fill="url(#g)"/>
-  <circle cx="400" cy="400" r="150" fill="#55585e"/>
-  <path d="M130 1000c0-190 120-330 270-330s270 140 270 330z" fill="#55585e"/>
-  <circle cx="400" cy="400" r="150" fill="none" stroke="#f29b38" stroke-width="4" opacity=".6"/>
+  <rect width="800" height="1000" fill="#2a2a2c"/>
+  <circle cx="400" cy="400" r="150" fill="#56565a"/>
+  <path d="M130 1000c0-190 120-330 270-330s270 140 270 330z" fill="#56565a"/>
 </svg>`);
 
 // ---------- Showreel ----------
 // Set to the reel file once it exists, e.g. "videos/showreel.mp4".
-// Until then the hero is a plain stage and the player shows a note.
 const REEL = null;
 
 // ---------- Projects ----------
-// Placeholder list. Edit this array to add, remove or reorder shots.
-// `frames` is the shot's frame range (shots conventionally start at 1001).
-// `preview` is a short muted loop that plays on hover (or when scrolled into view on phones).
-// `video` is the full clip that opens in the player.
+// Placeholder list. Edit this array to add, remove or reorder projects.
+// `featured` projects appear as snippets on the home page.
+// `loop` is a short muted clip that plays inline; `video` is the full clip for the viewer.
+// `slug` is the project's anchor on the Work page (work.html#slug).
 const PROJECTS = [
-  { title: "Moth & Lantern", studio: "Short film", role: "Character animation", tools: ["Maya", "Arnold"], year: 2026, frames: "1001–1096", hue: 24, preview: null, video: null },
-  { title: "Tidewalker", studio: "Game cinematic", role: "Creature animation", tools: ["Maya", "Unreal"], year: 2026, frames: "1001–1188", hue: 200, preview: null, video: null },
-  { title: "Paper Kite", studio: "Commercial", role: "Animation & lighting", tools: ["Blender", "Cycles"], year: 2025, frames: "1001–1072", hue: 330, preview: null, video: null },
-  { title: "Forge", studio: "Personal", role: "Body mechanics", tools: ["Maya"], year: 2025, frames: "1001–1240", hue: 12, preview: null, video: null },
-  { title: "Night Market", studio: "Feature (freelance)", role: "Crowd & background", tools: ["Houdini", "Maya"], year: 2024, frames: "1001–1144", hue: 268, preview: null, video: null },
-  { title: "Small Step", studio: "Personal", role: "Acting shot, lip sync", tools: ["Blender"], year: 2024, frames: "1001–1120", hue: 150, preview: null, video: null },
-].map((p, i) => ({ ...p, thumb: p.thumb || shotArt(p.hue, i) }));
+  { slug: "moth-and-lantern", title: "Moth & Lantern", kind: "Character animation", studio: "Short film", year: 2026, hue: 24, featured: true,
+    highlight: "Acting shot", blurb: "Placeholder. One or two lines on the shot: what the character feels, what Aidai was responsible for, what was hard.",
+    tools: ["Maya", "Arnold"], loop: null, video: null },
+  { slug: "tidewalker", title: "Tidewalker", kind: "Creature animation", studio: "Game cinematic", year: 2026, hue: 200, featured: true,
+    highlight: "Creature", blurb: "Placeholder. Weight, gait and the moment the creature turns to camera.",
+    tools: ["Maya", "Unreal"], loop: null, video: null },
+  { slug: "paper-kite", title: "Paper Kite", kind: "Animation & lighting", studio: "Commercial", year: 2025, hue: 330, featured: true,
+    highlight: "Commercial", blurb: "Placeholder. A 15-second spot: concept, animation and final lighting.",
+    tools: ["Blender", "Cycles"], loop: null, video: null },
+  { slug: "forge", title: "Forge", kind: "Body mechanics", studio: "Personal", year: 2025, hue: 12, featured: true,
+    highlight: "Body mechanics", blurb: "Placeholder. A heavy lift, from blocking to polish.",
+    tools: ["Maya"], loop: null, video: null },
+  { slug: "night-market", title: "Night Market", kind: "Crowd & background", studio: "Feature (freelance)", year: 2024, hue: 268, featured: false,
+    highlight: "Crowd", blurb: "Placeholder. Background performances that keep a busy frame alive.",
+    tools: ["Houdini", "Maya"], loop: null, video: null },
+].map((p, i) => ({
+  ...p,
+  poster: p.poster || shotArt(p.hue, i),
+  stills: p.stills || [shotArt(p.hue + 20, i + 1), shotArt(p.hue - 25, i + 2), shotArt(p.hue + 50, i)],
+}));
 
-const grid = document.getElementById("work-grid");
+document.querySelectorAll(".js-year").forEach((el) => { el.textContent = new Date().getFullYear(); });
 
-PROJECTS.forEach((p, i) => {
-  const card = document.createElement("button");
-  card.className = "card reveal";
-  card.dataset.index = i;
-  card.style.transitionDelay = `${(i % 3) * 80}ms`;
-  card.innerHTML = `
-    <span class="card__media">
-      <img src="${p.thumb}" alt="" loading="lazy">
-      ${p.preview ? `<video muted loop playsinline preload="none" data-src="${p.preview}"></video>` : ""}
-      <span class="card__frame">${p.frames}</span>
-    </span>
-    <span class="card__meta">
-      <span class="card__title"><span>${p.title}</span><span>${p.year}</span></span>
-      <span class="card__role">${p.role} · ${p.studio}</span>
-      <span class="chips">${p.tools.map((t) => `<span>${t}</span>`).join("")}</span>
-    </span>`;
-  grid.appendChild(card);
-});
+// ---------- Viewer (videos and stills) ----------
+const viewer = document.getElementById("viewer");
+let viewerItems = [];
+let viewerIndex = 0;
+let viewerOpener = null;
 
-document.getElementById("work-count").textContent = `${String(PROJECTS.length).padStart(2, "0")} shots`;
-document.getElementById("year").textContent = new Date().getFullYear();
-
-// ---------- Card previews ----------
-function startPreview(card) {
-  const video = card.querySelector("video");
-  if (!video || reduceMotion) return;
-  if (!video.src) video.src = video.dataset.src;
-  video.play().then(() => card.classList.add("is-playing")).catch(() => {});
-}
-
-function stopPreview(card) {
-  const video = card.querySelector("video");
-  if (!video) return;
+function showItem(i) {
+  const img = document.getElementById("viewer-img");
+  const video = document.getElementById("viewer-video");
+  const empty = document.getElementById("viewer-empty");
+  viewerIndex = (i + viewerItems.length) % viewerItems.length;
+  const item = viewerItems[viewerIndex];
   video.pause();
-  card.classList.remove("is-playing");
-}
-
-if (canHover) {
-  grid.querySelectorAll(".card").forEach((card) => {
-    card.addEventListener("mouseenter", () => startPreview(card));
-    card.addEventListener("mouseleave", () => stopPreview(card));
-  });
-} else {
-  // Phones have no hover: play a card's preview while it's mostly on screen
-  const inView = new IntersectionObserver((entries) => {
-    entries.forEach((e) => (e.isIntersecting ? startPreview(e.target) : stopPreview(e.target)));
-  }, { threshold: 0.6 });
-  grid.querySelectorAll(".card").forEach((card) => inView.observe(card));
-}
-
-// ---------- Player ----------
-const player = document.getElementById("player");
-const playerVideo = document.getElementById("player-video");
-const playerEmpty = document.getElementById("player-empty");
-let opener = null;
-
-function openPlayer({ src, title, meta }, from) {
-  opener = from;
-  document.getElementById("player-title").textContent = title;
-  document.getElementById("player-meta").textContent = meta;
-  playerVideo.hidden = !src;
-  playerEmpty.hidden = Boolean(src);
-  if (src) {
-    playerVideo.src = src;
-    playerVideo.play().catch(() => {});
+  document.getElementById("viewer-cap").textContent = item.caption;
+  img.hidden = item.type !== "image";
+  video.hidden = item.type !== "video" || !item.src;
+  empty.hidden = item.type !== "video" || Boolean(item.src);
+  if (item.type === "image") {
+    img.src = item.src;
+    img.alt = item.caption;
+    img.classList.remove("is-swapping");
+    void img.offsetWidth; // restart the fade-in
+    img.classList.add("is-swapping");
+  } else if (item.src) {
+    video.src = item.src;
+    video.play().catch(() => {});
   }
-  player.hidden = false;
+}
+
+function openViewer(items, index, from) {
+  if (!viewer) return;
+  viewerItems = items;
+  viewerOpener = from;
+  viewer.querySelectorAll(".viewer__nav").forEach((b) => { b.hidden = items.length < 2; });
+  showItem(index);
+  viewer.hidden = false;
   document.body.classList.add("no-scroll");
-  player.querySelector(".player__close").focus();
+  viewer.querySelector(".viewer__close").focus();
 }
 
-function closePlayer() {
-  playerVideo.pause();
-  playerVideo.removeAttribute("src");
-  playerVideo.load();
-  player.hidden = true;
+function closeViewer() {
+  const video = document.getElementById("viewer-video");
+  video.pause();
+  video.removeAttribute("src");
+  video.load();
+  viewer.hidden = true;
   document.body.classList.remove("no-scroll");
-  opener?.focus();
+  viewerOpener?.focus();
 }
 
-grid.addEventListener("click", (e) => {
-  const card = e.target.closest(".card");
-  if (!card) return;
-  const p = PROJECTS[Number(card.dataset.index)];
-  openPlayer({ src: p.video, title: p.title, meta: `${p.role} · ${p.studio} · ${p.year}` }, card);
-});
+if (viewer) {
+  viewer.querySelector(".viewer__close").addEventListener("click", closeViewer);
+  viewer.querySelector(".viewer__nav--prev").addEventListener("click", () => showItem(viewerIndex - 1));
+  viewer.querySelector(".viewer__nav--next").addEventListener("click", () => showItem(viewerIndex + 1));
+  viewer.addEventListener("click", (e) => { if (e.target === viewer) closeViewer(); });
 
-const playReel = document.getElementById("play-reel");
-playReel.addEventListener("click", () => {
-  openPlayer({ src: REEL, title: "Showreel", meta: new Date().getFullYear() }, playReel);
-});
-
-player.querySelector(".player__close").addEventListener("click", closePlayer);
-player.addEventListener("click", (e) => { if (e.target === player) closePlayer(); });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !player.hidden) closePlayer(); });
-
-// ---------- Breakdown compare ----------
-const compare = document.getElementById("compare");
-document.getElementById("compare-after").src = shotArt(210, 1);
-document.getElementById("compare-before").src = shotArt(210, 1, true);
-document.getElementById("compare-range").addEventListener("input", (e) => {
-  compare.style.setProperty("--pos", `${e.target.value}%`);
-});
-document.getElementById("portrait").src = portraitArt;
-
-// ---------- Timeline ----------
-// The page reads as one shot: scroll position is the playhead, sections are keyframes.
-const FPS = 24;
-const SHOT_SECONDS = 60;
-const sections = [...document.querySelectorAll("[data-label]")];
-const track = document.getElementById("track");
-const playhead = document.getElementById("playhead");
-const timecode = document.getElementById("timecode");
-const timelineLabel = document.getElementById("timeline-label");
-
-const maxScroll = () => Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
-const clamp01 = (n) => Math.min(Math.max(n, 0), 1);
-
-const keyframes = sections.map((section) => {
-  const label = section.dataset.label;
-  const kf = document.createElement("button");
-  kf.type = "button";
-  kf.className = "keyframe";
-  kf.setAttribute("aria-label", `Go to ${label}`);
-  kf.innerHTML = `<span class="keyframe__label">${label}</span>`;
-  kf.addEventListener("click", () => section.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" }));
-  track.appendChild(kf);
-  return kf;
-});
-
-function layoutKeyframes() {
-  sections.forEach((section, i) => {
-    const pct = clamp01(section.offsetTop / maxScroll());
-    keyframes[i].style.left = `${pct * 100}%`;
-    keyframes[i].dataset.pct = pct;
+  // Swipe left / right on touch screens
+  let touchX = null;
+  viewer.addEventListener("touchstart", (e) => { touchX = e.touches[0].clientX; }, { passive: true });
+  viewer.addEventListener("touchend", (e) => {
+    if (touchX === null || viewerItems.length < 2) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 50) showItem(viewerIndex + (dx < 0 ? 1 : -1));
+    touchX = null;
   });
 }
 
-function formatTimecode(progress) {
-  const total = Math.round(progress * SHOT_SECONDS * FPS);
-  const ff = total % FPS;
-  const s = Math.floor(total / FPS);
-  return [Math.floor(s / 3600), Math.floor(s / 60) % 60, s % 60, ff]
-    .map((n) => String(n).padStart(2, "0"))
-    .join(":");
-}
-
-function updateTimeline() {
-  const progress = clamp01(window.scrollY / maxScroll());
-  playhead.style.left = `${progress * 100}%`;
-  timecode.textContent = formatTimecode(progress);
-  keyframes.forEach((kf) => kf.classList.toggle("is-passed", Number(kf.dataset.pct) <= progress + 0.001));
-  let current = sections[0];
-  sections.forEach((s) => { if (s.offsetTop <= window.scrollY + window.innerHeight * 0.4) current = s; });
-  timelineLabel.textContent = current.dataset.label;
-}
-
-// Drag along the track to scrub through the page
-let scrubbing = false;
-function scrubTo(e) {
-  const rect = track.getBoundingClientRect();
-  window.scrollTo({ top: clamp01((e.clientX - rect.left) / rect.width) * maxScroll(), behavior: "instant" });
-}
-track.addEventListener("pointerdown", (e) => {
-  if (e.target.closest(".keyframe")) return;
-  scrubbing = true;
-  track.setPointerCapture(e.pointerId);
-  scrubTo(e);
-});
-track.addEventListener("pointermove", (e) => { if (scrubbing) scrubTo(e); });
-track.addEventListener("pointerup", () => { scrubbing = false; });
-track.addEventListener("pointercancel", () => { scrubbing = false; });
-
-let ticking = false;
-window.addEventListener("scroll", () => {
-  if (!ticking) {
-    requestAnimationFrame(() => { updateTimeline(); ticking = false; });
-    ticking = true;
+// ---------- Home ----------
+const reelPoster = document.getElementById("reel-poster");
+if (reelPoster) {
+  reelPoster.src = shotArt(210, 1);
+  const reelVideo = document.getElementById("reel-video");
+  if (REEL) {
+    reelVideo.src = REEL;
+    reelVideo.hidden = false;
   }
-}, { passive: true });
-new ResizeObserver(() => { layoutKeyframes(); updateTimeline(); }).observe(document.body);
+  const reelPlay = document.getElementById("reel-play");
+  reelPlay.addEventListener("click", () => {
+    openViewer([{ type: "video", src: REEL, caption: "Showreel" }], 0, reelPlay);
+  });
+}
+
+const snippets = document.getElementById("snippets");
+if (snippets) {
+  PROJECTS.filter((p) => p.featured).forEach((p, i) => {
+    const tile = document.createElement("a");
+    tile.className = "snip reveal";
+    tile.href = `work.html#${p.slug}`;
+    tile.style.transitionDelay = `${(i % 4) * 80}ms`;
+    tile.innerHTML = `
+      <span class="snip__media">
+        <img src="${p.poster}" alt="" loading="lazy">
+        ${p.loop ? `<video muted loop playsinline preload="none" data-src="${p.loop}"></video>` : ""}
+        ${p.loop || p.video ? `<span class="tag snip__badge">Video</span>` : ""}
+      </span>
+      <span class="snip__meta"><span>${p.title}</span><span>${p.kind}</span></span>`;
+    snippets.appendChild(tile);
+  });
+
+  // Snippets with a loop play it on hover, or while on screen on phones
+  const play = (tile) => {
+    const v = tile.querySelector("video");
+    if (!v || reduceMotion) return;
+    if (!v.src) v.src = v.dataset.src;
+    v.play().then(() => tile.classList.add("is-playing")).catch(() => {});
+  };
+  const stop = (tile) => {
+    const v = tile.querySelector("video");
+    if (!v) return;
+    v.pause();
+    tile.classList.remove("is-playing");
+  };
+  const tiles = snippets.querySelectorAll(".snip");
+  if (canHover) {
+    tiles.forEach((t) => {
+      t.addEventListener("mouseenter", () => play(t));
+      t.addEventListener("mouseleave", () => stop(t));
+    });
+  } else {
+    const inView = new IntersectionObserver((entries) => {
+      entries.forEach((e) => (e.isIntersecting ? play(e.target) : stop(e.target)));
+    }, { threshold: 0.6 });
+    tiles.forEach((t) => inView.observe(t));
+  }
+
+  document.getElementById("work-door-desc").textContent =
+    `${PROJECTS.length} projects, each with its shots, breakdown and stills.`;
+}
+
+// ---------- Work ----------
+const indexList = document.getElementById("index-list");
+const projectsEl = document.getElementById("projects");
+if (projectsEl) {
+  const pad = (n) => String(n).padStart(2, "0");
+  document.getElementById("work-count").textContent = `${pad(PROJECTS.length)} projects`;
+
+  PROJECTS.forEach((p, i) => {
+    indexList.insertAdjacentHTML("beforeend", `
+      <li><a href="#${p.slug}"><span>${pad(i + 1)}</span><span>${p.title}</span><span>${p.kind} · ${p.year}</span></a></li>`);
+
+    const article = document.createElement("article");
+    article.className = "project";
+    article.id = p.slug;
+    article.innerHTML = `
+      <header class="panel project__cover">
+        <div class="labels"><span>${pad(i + 1)} / ${pad(PROJECTS.length)}</span><span>${p.studio} · ${p.year}</span></div>
+        <div class="reveal">
+          <h2 class="project__title">${p.title}</h2>
+          <p class="project__kind">( ${p.kind} )</p>
+        </div>
+      </header>
+      <div class="panel panel--dark project__stage">
+        <div class="screen reveal">
+          <img class="screen__poster" src="${p.poster}" alt="${p.title} (placeholder)">
+          ${p.loop ? `<video class="screen__video autoplay" src="${p.loop}" muted loop playsinline preload="metadata"></video>` : ""}
+          <button class="screen__play" data-project="${i}"><span aria-hidden="true"></span>Play with sound</button>
+        </div>
+        <div class="stage__text reveal">
+          <span class="tag">${p.highlight}</span>
+          <p>${p.blurb}</p>
+          <ul class="stage__tools">${p.tools.map((t) => `<li>${t}</li>`).join("")}</ul>
+        </div>
+        <span class="stage__vertical" aria-hidden="true">( ${p.kind} )</span>
+      </div>
+      <div class="project__stills">
+        ${p.stills.map((src, k) => `
+          <button class="still" data-project="${i}" data-still="${k}" aria-label="View ${p.title}, still ${k + 1}">
+            <img src="${src}" alt="" loading="lazy">
+          </button>`).join("")}
+      </div>`;
+    projectsEl.appendChild(article);
+  });
+
+  projectsEl.addEventListener("click", (e) => {
+    const play = e.target.closest(".screen__play");
+    const still = e.target.closest(".still");
+    if (play) {
+      const p = PROJECTS[Number(play.dataset.project)];
+      openViewer([{ type: "video", src: p.video, caption: `${p.title} — ${p.kind}` }], 0, play);
+    } else if (still) {
+      const p = PROJECTS[Number(still.dataset.project)];
+      const items = p.stills.map((src, k) => ({ type: "image", src, caption: `${p.title} — still ${k + 1} / ${p.stills.length}` }));
+      openViewer(items, Number(still.dataset.still), still);
+    }
+  });
+
+  // Projects are built by this script, so the browser can't jump to work.html#slug on its own.
+  // Jump now, then again once fonts and images have settled the layout.
+  const target = location.hash && document.getElementById(location.hash.slice(1));
+  if (target) {
+    const jump = () => target.scrollIntoView({ behavior: "instant", block: "start" });
+    jump();
+    document.fonts?.ready.then(jump);
+    window.addEventListener("load", jump, { once: true });
+  }
+}
+
+// ---------- About ----------
+document.getElementById("portrait")?.setAttribute("src", portraitArt);
+
+// ---------- Inline loops (showreel and project stages) ----------
+// Play while on screen, pause when off, so phones don't run every video at once
+const loops = [...document.querySelectorAll("video.autoplay")].filter((v) => v.getAttribute("src"));
+if (loops.length && !reduceMotion) {
+  const watcher = new IntersectionObserver((entries) => {
+    entries.forEach((e) => (e.isIntersecting ? e.target.play().catch(() => {}) : e.target.pause()));
+  }, { threshold: 0.25 });
+  loops.forEach((v) => watcher.observe(v));
+}
+
+// ---------- Backdrop menu ----------
+const toggle = document.querySelector(".menu-toggle");
+const backdrop = document.getElementById("backdrop");
+const backdropArt = backdrop.querySelector(".backdrop__art");
+const toggleLabel = toggle.querySelector(".menu-toggle__label");
+const MENU_ART = {
+  home: shotArt(210, 1),
+  work: PROJECTS[0].poster,
+  about: portraitArt,
+  contact: PROJECTS[1].poster,
+};
+
+function showMenuArt(key) {
+  backdropArt.style.backgroundImage = `url("${MENU_ART[key] || MENU_ART.home}")`;
+  backdropArt.classList.add("is-visible");
+}
+
+function setMenu(open) {
+  backdrop.classList.toggle("is-open", open);
+  backdrop.setAttribute("aria-hidden", String(!open));
+  toggle.setAttribute("aria-expanded", String(open));
+  toggleLabel.textContent = open ? "Close" : "Menu";
+  document.body.classList.toggle("no-scroll", open);
+  // Opens over the current page's art, so touch screens (no hover) see it too
+  if (open) showMenuArt(page);
+  else backdropArt.classList.remove("is-visible");
+}
+
+toggle.addEventListener("click", () => setMenu(!backdrop.classList.contains("is-open")));
+
+backdrop.querySelectorAll("a").forEach((link) => {
+  if (link.dataset.page === page) link.setAttribute("aria-current", "page");
+  link.addEventListener("mouseenter", () => showMenuArt(link.dataset.page));
+  link.addEventListener("focus", () => showMenuArt(link.dataset.page));
+  link.addEventListener("mouseleave", () => showMenuArt(page));
+  link.addEventListener("click", () => setMenu(false));
+});
+
+document.addEventListener("keydown", (e) => {
+  if (viewer && !viewer.hidden) {
+    if (e.key === "Escape") closeViewer();
+    if (e.key === "ArrowLeft" && viewerItems.length > 1) showItem(viewerIndex - 1);
+    if (e.key === "ArrowRight" && viewerItems.length > 1) showItem(viewerIndex + 1);
+  } else if (e.key === "Escape" && backdrop.classList.contains("is-open")) {
+    setMenu(false);
+  }
+});
 
 // ---------- Scroll reveal ----------
-document.querySelectorAll(".section__head, .compare, .pipeline li, .about__portrait, .about__text, .contact > *")
+document.querySelectorAll(".cover__body, .labels, .screen, .door, .index__list, .about__head, .about__portrait, .about__bio, .about__cols, .contact__email, .next__title")
   .forEach((el) => el.classList.add("reveal"));
 
 const revealer = new IntersectionObserver((entries) => {
@@ -252,11 +335,3 @@ const revealer = new IntersectionObserver((entries) => {
   });
 }, { threshold: 0.12 });
 document.querySelectorAll(".reveal").forEach((el) => revealer.observe(el));
-
-// ---------- Showreel in the hero ----------
-const heroVideo = document.getElementById("hero-video");
-if (REEL) {
-  heroVideo.hidden = false;
-  heroVideo.src = REEL;
-  if (!reduceMotion) heroVideo.play().catch(() => {});
-}
