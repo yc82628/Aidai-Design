@@ -1,10 +1,9 @@
 /* ---------- Tokens ---------- */
-/* Look: a 3D app's viewport. Grey ground with a faint grid, orange for "selected". */
+/* Look: a plain dark canvas for video to sit on, orange for "selected". */
 :root {
   --viewport: #232529;
   --panel: #2c2f34;
   --line: #3b3f46;
-  --grid: rgba(255, 255, 255, .035);
   --text: #ebe8e3;
   --muted: #9a9fa6;
   --accent: #f29b38;      /* selection orange — swap to taste */
@@ -20,11 +19,7 @@
 html { scroll-behavior: smooth; }
 body {
   margin: 0;
-  background-color: var(--viewport);
-  background-image:
-    linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 48px 48px;
+  background: var(--viewport);
   color: var(--text);
   font: 400 16px/1.6 var(--sans);
   -webkit-font-smoothing: antialiased;
@@ -89,7 +84,6 @@ button { font: inherit; color: inherit; }
   padding-bottom: calc(var(--gutter) + var(--timeline-h));
   background: var(--viewport);
 }
-.hero__viewport,
 .hero__video {
   position: absolute;
   inset: 0;
@@ -103,16 +97,6 @@ button { font: inherit; color: inherit; }
   inset: 0;
   background: linear-gradient(to top, rgba(20, 21, 24, .85), transparent 55%);
   pointer-events: none;
-}
-.hero__hud {
-  position: absolute;
-  top: calc(56px + env(safe-area-inset-top));
-  left: calc(var(--gutter) + env(safe-area-inset-left));
-  z-index: 1;
-  display: grid;
-  gap: 2px;
-  font: 400 12px/1.4 var(--mono);
-  color: var(--muted);
 }
 .hero__text { position: relative; z-index: 1; max-width: 900px; }
 .hero h1 {

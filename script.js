@@ -38,7 +38,7 @@ const portraitArt = svgURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0
 
 // ---------- Showreel ----------
 // Set to the reel file once it exists, e.g. "videos/showreel.mp4".
-// Until then the hero shows the wireframe viewport and the player shows a note.
+// Until then the hero is a plain stage and the player shows a note.
 const REEL = null;
 
 // ---------- Projects ----------
@@ -253,145 +253,10 @@ const revealer = new IntersectionObserver((entries) => {
 }, { threshold: 0.12 });
 document.querySelectorAll(".reveal").forEach((el) => revealer.observe(el));
 
-// ---------- Viewport (placeholder showreel) ----------
-// A wireframe ball bouncing across a grid floor, with squash & stretch and onion-skin
-// ghosts of earlier frames. Swapped out automatically once REEL is set.
-const canvas = document.getElementById("viewport");
+// ---------- Showreel in the hero ----------
 const heroVideo = document.getElementById("hero-video");
-const hudFrame = document.getElementById("hud-frame");
-
 if (REEL) {
-  canvas.hidden = true;
   heroVideo.hidden = false;
   heroVideo.src = REEL;
   if (!reduceMotion) heroVideo.play().catch(() => {});
-} else {
-  startViewport();
-}
-
-function startViewport() {
-  const ctx = canvas.getContext("2d");
-  const RADIUS = 0.6;
-  const CAM = { y: 1.4, dist: 7 };
-  const LOOP_MS = 4200;   // one pass left to right
-  const BOUNCES = 3;
-  let w = 0, h = 0, f = 0, cx = 0, cy = 0;
-  let running = true;
-
-  // Wireframe sphere: latitude rings and longitude lines as unit-sphere polylines
-  const lines = [];
-  for (let lat = -60; lat <= 60; lat += 30) {
-    const ring = [];
-    for (let a = 0; a <= 360; a += 15) {
-      const phi = (lat * Math.PI) / 180, th = (a * Math.PI) / 180;
-      ring.push([Math.cos(phi) * Math.cos(th), Math.sin(phi), Math.cos(phi) * Math.sin(th)]);
-    }
-    lines.push(ring);
-  }
-  for (let lon = 0; lon < 180; lon += 30) {
-    const ring = [];
-    for (let a = 0; a <= 360; a += 15) {
-      const th = (lon * Math.PI) / 180, phi = (a * Math.PI) / 180;
-      ring.push([Math.cos(phi) * Math.cos(th), Math.sin(phi), Math.cos(phi) * Math.sin(th)]);
-    }
-    lines.push(ring);
-  }
-
-  function resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    w = canvas.clientWidth;
-    h = canvas.clientHeight;
-    canvas.width = w * dpr;
-    canvas.height = h * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const portrait = h > w;
-    f = Math.min(w, h) * (portrait ? 1.1 : 1.2);
-    cx = w * (portrait ? 0.5 : 0.62);
-    cy = h * (portrait ? 0.42 : 0.5);
-  }
-
-  const project = (x, y, z) => {
-    const Z = z + CAM.dist;
-    return [cx + (x / Z) * f, cy - ((y - CAM.y) / Z) * f];
-  };
-
-  // Ball state at loop position u (0..1): position, squash/stretch, roll
-  function ballAt(u) {
-    const x = -3 + 6 * u;
-    const phase = (u * BOUNCES) % 1;
-    const height = 4 * phase * (1 - phase) * 2.2;
-    const contact = Math.max(0, 1 - Math.min(phase, 1 - phase) / 0.07);
-    const sy = 1 - 0.32 * contact;
-    const sx = 1 + 0.24 * contact;
-    return { x, y: RADIUS * sy + height, sx, sy, roll: -x / RADIUS };
-  }
-
-  function drawBall(b, stroke, width) {
-    const c = Math.cos(b.roll), s = Math.sin(b.roll);
-    ctx.strokeStyle = stroke;
-    ctx.lineWidth = width;
-    lines.forEach((ring) => {
-      ctx.beginPath();
-      ring.forEach(([px, py, pz], i) => {
-        // roll around Z, then squash/stretch, then place in the world
-        const rx = px * c - py * s, ry = px * s + py * c;
-        const [X, Y] = project(b.x + rx * RADIUS * b.sx, b.y + ry * RADIUS * b.sy, pz * RADIUS * b.sx);
-        i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y);
-      });
-      ctx.stroke();
-    });
-  }
-
-  function drawFloor() {
-    ctx.lineWidth = 1;
-    for (let x = -8; x <= 8; x++) {
-      ctx.strokeStyle = x === 0 ? "rgba(110, 200, 120, .35)" : "rgba(255, 255, 255, .07)";   // green axis
-      const [x1, y1] = project(x, 0, -3), [x2, y2] = project(x, 0, 14);
-      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    }
-    for (let z = -3; z <= 14; z++) {
-      ctx.strokeStyle = z === 0 ? "rgba(230, 90, 90, .35)" : "rgba(255, 255, 255, .07)";    // red axis
-      const [x1, y1] = project(-8, 0, z), [x2, y2] = project(8, 0, z);
-      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    }
-  }
-
-  function drawShadow(b) {
-    const [sx, sy] = project(b.x, 0, 0);
-    const spread = 1 / (1 + (b.y - RADIUS) * 0.35);
-    ctx.fillStyle = `rgba(0, 0, 0, ${0.35 * spread})`;
-    ctx.beginPath();
-    ctx.ellipse(sx, sy, (RADIUS * b.sx * f) / CAM.dist * spread, (RADIUS * f) / CAM.dist * 0.18 * spread, 0, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  function frame(time) {
-    ctx.clearRect(0, 0, w, h);
-    drawFloor();
-    const u = (time % LOOP_MS) / LOOP_MS;
-    const ball = ballAt(u);
-    drawShadow(ball);
-    // Onion skin: three earlier frames, fading out (skipped across the loop seam)
-    [0.045, 0.09, 0.135].forEach((back, i) => {
-      if (u - back < 0) return;
-      drawBall(ballAt(u - back), `rgba(242, 155, 56, ${0.32 - i * 0.09})`, 1);
-    });
-    drawBall(ball, "rgba(235, 232, 227, .9)", 1.4);
-    if (hudFrame) hudFrame.textContent = `Frame ${1001 + Math.floor((time / 1000) * FPS) % 240}`;
-  }
-
-  function loop(time) {
-    if (running) frame(time);
-    requestAnimationFrame(loop);
-  }
-
-  resize();
-  window.addEventListener("resize", resize);
-  if (reduceMotion) {
-    frame(LOOP_MS * 0.3);   // a single still pose
-  } else {
-    // Only animate while the hero is on screen
-    new IntersectionObserver(([entry]) => { running = entry.isIntersecting; }).observe(canvas);
-    requestAnimationFrame(loop);
-  }
 }
