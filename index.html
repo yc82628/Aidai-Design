@@ -46,15 +46,18 @@
       </div>
     </section>
 
-    <!-- Showreel: set REEL in script.js and it loops here muted; the button plays it with sound -->
+    <!-- Showreel: the panel burns from one featured project's image to the next (Ember Reveal);
+         "Play with sound" opens the reel (set REEL in script.js) in the viewer -->
     <section class="panel panel--dark showreel" id="showreel">
       <div class="labels">
         <span>( Showreel )</span>
         <span class="js-year"></span>
       </div>
       <div class="screen">
-        <img class="screen__poster" id="reel-poster" alt="">
-        <video class="screen__video autoplay" id="reel-video" muted loop playsinline hidden></video>
+        <div class="ember" id="reel-ember" tabindex="0" role="button" aria-label="Featured work: show the next image">
+          <canvas aria-hidden="true"></canvas>
+          <span class="ember__count"></span>
+        </div>
         <button class="screen__play" id="reel-play"><span aria-hidden="true"></span>Play with sound</button>
       </div>
     </section>

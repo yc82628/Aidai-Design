@@ -8,8 +8,8 @@ Laid out like a printed portfolio: paper pages with big type for titles, black s
 
 | Page | File | What's on it |
 | --- | --- | --- |
-| Home | `index.html` | Cover, showreel, snippets from featured projects (each links to that project on Work), and "Where to start" doors to Work and About. |
-| Work | `work.html` | Project index, then a spread per project: title page, black stage with the video, highlight tag, notes, tools, and stills. |
+| Home | `index.html` | Cover, showreel panel (an Ember Reveal burning through the featured projects' images: hover to peek through a hole that follows the cursor, click to burn through, with "Play with sound" for the reel), snippets from featured projects (each links to that project on Work), and "Where to start" doors to Work and About. |
+| Work | `work.html` | Project index, then a spread per project: title page, black stage with the video, highlight tag, notes, tools, and stills shown as an Ember Reveal (with a mouse, a smouldering hole follows the cursor to peek at the next still; click to burn through to it; "View full size" opens the viewer). |
 | About | `about.html` | Bio, portrait, experience, education, toolkit, contact. |
 
 ## Files
@@ -21,7 +21,7 @@ Laid out like a printed portfolio: paper pages with big type for titles, black s
 
 ## Adding real work
 
-- Showreel: set `REEL` in `script.js`, e.g. `"videos/showreel.mp4"`. It loops muted on the home page; "Play with sound" opens it in the viewer.
+- Showreel: set `REEL` in `script.js`, e.g. `"videos/showreel.mp4"`. "Play with sound" on the home page opens it in the viewer.
 - Each project in `PROJECTS`: `poster` (image), `stills` (list of images), `loop` (short muted clip that plays inline and on home-page snippets) and `video` (full clip for the viewer).
 - `featured: true` puts a project in the home-page snippets.
 

@@ -441,23 +441,49 @@ h1, h2, h3 { margin: 0; font-family: var(--display); font-weight: 500; line-heig
   color: #6d6d69;
 }
 
-.project__stills {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  padding: 8px var(--gutter) 0;
-  background: var(--stage);
-}
-.still {
-  padding: 0;
-  border: 0;
-  background: #151517;
-  aspect-ratio: 4 / 3;
+.project__stills { padding: 8px var(--gutter) 0; background: var(--stage); }
+
+/* Ember Reveal: hover to peek through a smouldering hole, click to burn through to the next image */
+.ember {
+  position: relative;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
-  cursor: zoom-in;
+  background: #151517;
+  cursor: crosshair;
 }
-.still img { width: 100%; height: 100%; object-fit: cover; transition: transform .8s var(--ease); }
-@media (hover: hover) { .still:hover img { transform: scale(1.04); } }
+.ember.is-peeking { cursor: none; }   /* the canvas draws a glowing coal and peek hole instead */
+.ember canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.screen .ember { position: absolute; inset: 0; aspect-ratio: auto; }   /* fills the showreel panel */
+.screen .ember__count { bottom: auto; top: 12px; }   /* clear of the play button */
+.ember__hint,
+.ember__count {
+  position: absolute;
+  bottom: 10px;
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: rgba(243, 243, 241, .8);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, .6);
+  pointer-events: none;
+}
+.ember__hint { left: 12px; transition: opacity .4s; }
+.ember.is-used .ember__hint { opacity: 0; }
+.ember__count { right: 12px; font-variant-numeric: tabular-nums; }
+.ember__full {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 10px;
+  border: 0;
+  background: rgba(14, 14, 14, .7);
+  color: var(--paper);
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.ember__full:hover,
+.ember__full:focus-visible { background: var(--accent); color: var(--ink); }
 
 /* ---------- Contact ---------- */
 .contact { min-height: 70svh; display: grid; align-content: space-between; gap: 48px; }
@@ -555,8 +581,6 @@ h1, h2, h3 { margin: 0; font-family: var(--display); font-weight: 500; line-heig
   .snip__meta span:last-child { font-size: 12px; }
   .project__stage { grid-template-columns: 1fr; }
   .stage__vertical { display: none; }
-  .project__stills { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .project__stills .still:nth-child(3) { grid-column: 1 / -1; aspect-ratio: 16 / 9; }
   .orbits { top: 14%; right: -30vw; width: 110vw; }
   .viewer__nav { position: absolute; bottom: calc(12px + env(safe-area-inset-bottom)); }
   .viewer__nav--prev { left: 16px; }

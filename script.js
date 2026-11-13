@@ -131,15 +131,265 @@ if (viewer) {
   });
 }
 
-// ---------- Home ----------
-const reelPoster = document.getElementById("reel-poster");
-if (reelPoster) {
-  reelPoster.src = shotArt(210, 1);
-  const reelVideo = document.getElementById("reel-video");
-  if (REEL) {
-    reelVideo.src = REEL;
-    reelVideo.hidden = false;
+// ---------- Ember Reveal ----------
+// A burning hole spreads from where you click, revealing the next image.
+// With a mouse, a small smouldering hole follows the cursor and lets you peek at the
+// next image through it; clicking sets it alight from that spot.
+// Burns once by itself the first time it scrolls into view, so visitors discover it;
+// with `autoplay` (ms) it keeps burning to the next image on its own while on screen
+// (paused while the cursor is over it).
+// Used for the home showreel panel and each project's stills on the Work page.
+
+// Run onFrame every animation frame, but only while el is on screen
+function whileVisible(el, onFrame) {
+  let visible = false;
+  let raf = 0;
+  const tick = (t) => {
+    onFrame(t);
+    raf = visible ? requestAnimationFrame(tick) : 0;
+  };
+  new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting;
+    if (visible && !raf) raf = requestAnimationFrame(tick);
+  }).observe(el);
+}
+
+function loadImg(src) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.src = src;
+  });
+}
+
+function fitCanvas(canvas) {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = Math.max(1, Math.round(rect.width * dpr));
+  canvas.height = Math.max(1, Math.round(rect.height * dpr));
+  return { w: canvas.width, h: canvas.height, dpr };
+}
+
+function drawCover(ctx, img, w, h) {
+  const k = Math.max(w / img.naturalWidth, h / img.naturalHeight);
+  const dw = img.naturalWidth * k, dh = img.naturalHeight * k;
+  ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+}
+
+function emberReveal(stage, srcs, { autoplay = 0 } = {}) {
+  const canvas = stage.querySelector("canvas");
+  const count = stage.querySelector(".ember__count");
+  const ctx = canvas.getContext("2d");
+  const DURATION = 1900;
+  const PEEK = 0.11;   // peek hole radius, as a share of the panel's shorter side
+  const phase = [Math.random() * 6, Math.random() * 6, Math.random() * 6];
+  const embers = [];
+  let imgs = [];
+  let size = fitCanvas(canvas);
+  let current = 0;
+  let burn = null;   // { x, y, r0, start }
+  let autoBurned = false;
+  let lastBurnEnd = 0;
+  // the cursor (in canvas pixels) and the peek hole that trails it
+  const pointer = { x: 0, y: 0, inside: false };
+  const peek = { x: 0, y: 0, r: 0 };
+
+  const radiusAt = (a, r, t) => r * (1
+    + 0.16 * Math.sin(a * 3 + phase[0] + t * 1.3)
+    + 0.09 * Math.sin(a * 7 + phase[1] - t * 2.1)
+    + 0.05 * Math.sin(a * 13 + phase[2] + t * 3.7));
+
+  function holePath(cx, cy, r, t) {
+    ctx.beginPath();
+    for (let k = 0; k <= 72; k++) {
+      const a = (k / 72) * Math.PI * 2;
+      const rr = Math.max(0, radiusAt(a, r, t));
+      const x = cx + Math.cos(a) * rr, y = cy + Math.sin(a) * rr;
+      k ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.closePath();
   }
+
+  // Charred band, then the glowing edge (thinner on a small hole)
+  function drawRim(cx, cy, r, t) {
+    const { dpr } = size;
+    const s = Math.min(1, r / (60 * dpr) + 0.35);
+    holePath(cx, cy, r, t);
+    ctx.lineJoin = "round";
+    ctx.lineWidth = 26 * dpr * s;
+    ctx.strokeStyle = "rgba(25, 12, 6, .55)";
+    ctx.stroke();
+    ctx.save();
+    ctx.shadowBlur = 28 * dpr * s;
+    ctx.shadowColor = "rgba(255, 110, 20, .95)";
+    ctx.lineWidth = 10 * dpr * s;
+    ctx.strokeStyle = "rgba(255, 120, 30, .55)";
+    ctx.stroke();
+    ctx.restore();
+    ctx.lineWidth = 2.5 * dpr;
+    ctx.strokeStyle = "#ffd98a";
+    ctx.stroke();
+  }
+
+  // Sparks lifting off the edge of a hole
+  function shed(cx, cy, r, t, n) {
+    const { dpr } = size;
+    for (let k = 0; k < n; k++) {
+      const a = Math.random() * Math.PI * 2;
+      const rr = radiusAt(a, r, t);
+      embers.push({ x: cx + Math.cos(a) * rr, y: cy + Math.sin(a) * rr, vx: (Math.random() - 0.5) * dpr, vy: -(0.6 + Math.random() * 1.6) * dpr, life: 1 });
+    }
+  }
+
+  const updateCount = () => { if (count) count.textContent = `${current + 1} / ${srcs.length}`; };
+
+  function frame(time) {
+    if (!imgs.length) return;
+    const { w, h, dpr } = size;
+    const t = time / 1000;
+    const next = imgs[(current + 1) % imgs.length];
+    ctx.clearRect(0, 0, w, h);
+
+    // the peek hole eases after the cursor, and closes when it leaves or a burn starts
+    const px = peek.x, py = peek.y;
+    peek.x += (pointer.x - peek.x) * 0.22;
+    peek.y += (pointer.y - peek.y) * 0.22;
+    const peekTarget = pointer.inside && !burn ? PEEK * Math.min(w, h) : 0;
+    peek.r += (peekTarget - peek.r) * 0.14;
+
+    if (!burn || time < burn.start) {
+      drawCover(ctx, imgs[current], w, h);
+      if (peek.r > 1) {
+        ctx.save();
+        holePath(peek.x, peek.y, peek.r, t);
+        ctx.clip();
+        drawCover(ctx, next, w, h);
+        ctx.restore();
+        drawRim(peek.x, peek.y, peek.r, t);
+        // sparks fly off as it moves, plus the odd one while it sits still
+        const speed = Math.hypot(peek.x - px, peek.y - py) / dpr;
+        shed(peek.x, peek.y, peek.r, t, Math.min(4, Math.floor(speed / 6)) + (Math.random() < 0.25 ? 1 : 0));
+      }
+    } else {
+      const p = Math.min((time - burn.start) / DURATION, 1);
+      const r = burn.r0 + p * p * (Math.hypot(w, h) * 1.1 - burn.r0);
+      drawCover(ctx, next, w, h);
+      // current image everywhere except inside the hole
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, w, h);
+      holePath(burn.x, burn.y, r, t);
+      ctx.clip("evenodd");
+      drawCover(ctx, imgs[current], w, h);
+      ctx.restore();
+      drawRim(burn.x, burn.y, r, t);
+      if (r > 4) shed(burn.x, burn.y, r, t, 6);
+      if (p >= 1) {
+        current = (current + 1) % imgs.length;
+        burn = null;
+        lastBurnEnd = time;
+        updateCount();
+      }
+    }
+
+    for (let k = embers.length - 1; k >= 0; k--) {
+      const e = embers[k];
+      e.x += e.vx;
+      e.y += e.vy;
+      e.life -= 0.02;
+      if (e.life <= 0) { embers.splice(k, 1); continue; }
+      ctx.fillStyle = `rgba(255, ${150 + 90 * e.life}, 60, ${e.life})`;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, 1.6 * dpr * e.life + 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // the cursor itself: a small live coal
+    if (pointer.inside) {
+      ctx.save();
+      ctx.shadowBlur = 12 * dpr;
+      ctx.shadowColor = "rgba(255, 120, 30, .9)";
+      ctx.fillStyle = "#ffd98a";
+      ctx.beginPath();
+      ctx.arc(pointer.x, pointer.y, 3.5 * dpr, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function burnAt(x, y, r0 = 0) {
+    if (burn || !imgs.length) return;
+    stage.classList.add("is-used");
+    if (reduceMotion) {   // no fire: just show the next image
+      current = (current + 1) % imgs.length;
+      updateCount();
+      return frame(performance.now());
+    }
+    burn = { x, y, r0, start: performance.now() };
+    peek.r = 0;
+  }
+
+  const toCanvas = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    return { x: (e.clientX - rect.left) * size.dpr, y: (e.clientY - rect.top) * size.dpr };
+  };
+
+  stage.addEventListener("click", (e) => {
+    if (e.target.closest(".ember__full")) return;
+    const at = toCanvas(e);
+    // with a mouse, the burn grows out of the peek hole rather than from a point
+    burnAt(at.x, at.y, pointer.inside ? peek.r : 0);
+  });
+  stage.addEventListener("keydown", (e) => {
+    if (e.target !== stage || (e.key !== "Enter" && e.key !== " ")) return;
+    e.preventDefault();
+    burnAt(size.w / 2, size.h / 2);
+  });
+
+  // Mouse and pen only: on touch screens a tap burns, as before
+  if (!reduceMotion) {
+    stage.addEventListener("pointermove", (e) => {
+      if (e.pointerType === "touch") return;
+      const at = toCanvas(e);
+      const wasInside = pointer.inside;
+      pointer.x = at.x;
+      pointer.y = at.y;
+      pointer.inside = !e.target.closest(".ember__full");   // normal cursor over the button
+      if (pointer.inside && !wasInside) { peek.x = at.x; peek.y = at.y; }
+      stage.classList.toggle("is-peeking", pointer.inside);
+    });
+    stage.addEventListener("pointerleave", () => {
+      pointer.inside = false;
+      lastBurnEnd = performance.now();   // a moment's pause before autoplay resumes
+      stage.classList.remove("is-peeking");
+    });
+  }
+  window.addEventListener("resize", () => { size = fitCanvas(canvas); frame(performance.now()); });
+
+  updateCount();
+  Promise.all(srcs.map(loadImg)).then((loaded) => {
+    imgs = loaded;
+    frame(0);
+    whileVisible(stage, (time) => {
+      if (!autoBurned && !reduceMotion) {
+        autoBurned = true;
+        burn = { x: size.w * 0.5, y: size.h * 0.55, r0: 0, start: time + 900 };
+      } else if (autoplay && !burn && !pointer.inside && !reduceMotion && time - lastBurnEnd > autoplay) {
+        // next one starts from a random spot so it doesn't feel mechanical
+        burn = { x: size.w * (0.25 + Math.random() * 0.5), y: size.h * (0.3 + Math.random() * 0.4), r0: 0, start: time };
+      }
+      frame(time);
+    });
+  });
+
+  return { current: () => current };
+}
+
+// ---------- Home ----------
+const reelEmber = document.getElementById("reel-ember");
+if (reelEmber) {
+  // Burns through the featured projects' posters on its own every few seconds
+  emberReveal(reelEmber, PROJECTS.filter((p) => p.featured).map((p) => p.poster), { autoplay: 4500 });
   const reelPlay = document.getElementById("reel-play");
   reelPlay.addEventListener("click", () => {
     openViewer([{ type: "video", src: REEL, caption: "Showreel" }], 0, reelPlay);
@@ -199,6 +449,7 @@ const projectsEl = document.getElementById("projects");
 if (projectsEl) {
   const pad = (n) => String(n).padStart(2, "0");
   document.getElementById("work-count").textContent = `${pad(PROJECTS.length)} projects`;
+  const embers = [];
 
   PROJECTS.forEach((p, i) => {
     indexList.insertAdjacentHTML("beforeend", `
@@ -229,24 +480,29 @@ if (projectsEl) {
         <span class="stage__vertical" aria-hidden="true">( ${p.kind} )</span>
       </div>
       <div class="project__stills">
-        ${p.stills.map((src, k) => `
-          <button class="still" data-project="${i}" data-still="${k}" aria-label="View ${p.title}, still ${k + 1}">
-            <img src="${src}" alt="" loading="lazy">
-          </button>`).join("")}
+        <div class="ember" tabindex="0" role="button" aria-label="${p.title} stills: show the next one">
+          <canvas aria-hidden="true"></canvas>
+          <span class="ember__hint" aria-hidden="true">${canHover ? "Hover to peek, click" : "Tap"} to reveal the next still</span>
+          <span class="ember__count"></span>
+          <button class="ember__full" data-project="${i}">View full size</button>
+        </div>
       </div>`;
     projectsEl.appendChild(article);
+    embers[i] = emberReveal(article.querySelector(".ember"), p.stills);
   });
 
   projectsEl.addEventListener("click", (e) => {
     const play = e.target.closest(".screen__play");
-    const still = e.target.closest(".still");
+    const full = e.target.closest(".ember__full");
     if (play) {
       const p = PROJECTS[Number(play.dataset.project)];
       openViewer([{ type: "video", src: p.video, caption: `${p.title} — ${p.kind}` }], 0, play);
-    } else if (still) {
-      const p = PROJECTS[Number(still.dataset.project)];
+    } else if (full) {
+      // Open the viewer on whichever still is showing; the viewer can then step through them all
+      const i = Number(full.dataset.project);
+      const p = PROJECTS[i];
       const items = p.stills.map((src, k) => ({ type: "image", src, caption: `${p.title} — still ${k + 1} / ${p.stills.length}` }));
-      openViewer(items, Number(still.dataset.still), still);
+      openViewer(items, embers[i].current(), full);
     }
   });
 
